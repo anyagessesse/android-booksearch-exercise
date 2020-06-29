@@ -1,13 +1,18 @@
 package com.codepath.android.booksearch.activities;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.util.Log;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SearchView;
+import androidx.core.view.MenuItemCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -19,6 +24,7 @@ import com.codepath.asynchttpclient.callback.JsonHttpResponseHandler;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.parceler.Parcels;
 
 import java.util.ArrayList;
 
@@ -44,15 +50,14 @@ public class BookListActivity extends AppCompatActivity {
         bookAdapter.setOnItemClickListener(new BookAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(View itemView, int position) {
-                Toast.makeText(
-                        BookListActivity.this,
-                        "An item at position " + position + " clicked!",
-                        Toast.LENGTH_SHORT).show();
-
                 // Handle item click here:
                 // Create Intent to start BookDetailActivity
+                Intent intent = new Intent(BookListActivity.this,BookDetailActivity.class);
                 // Get Book at the given position
+                Book book = abooks.get(position);
                 // Pass the book into details activity using extras
+                intent.putExtra("book", Parcels.wrap(book));
+                BookListActivity.this.startActivity(intent);
             }
         });
 
@@ -62,8 +67,6 @@ public class BookListActivity extends AppCompatActivity {
         // Set layout manager to position the items
         rvBooks.setLayoutManager(new LinearLayoutManager(this));
 
-        // Fetch the data remotely
-        fetchBooks("Oscar Wilde");
     }
 
     // Executes an API call to the OpenLibrary search endpoint, parses the results
@@ -108,8 +111,25 @@ public class BookListActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_book_list, menu);
-        return true;
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu_book_list, menu);
+        MenuItem searchItem = menu.findItem(R.id.action_search);
+        final SearchView searchView = (SearchView) MenuItemCompat.getActionView(searchItem);
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                // Fetch the data remotely
+                fetchBooks(query);
+                return true;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                return false;
+            }
+        });
+
+        return super.onCreateOptionsMenu(menu);
     }
 
     @Override
